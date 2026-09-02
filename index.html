@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>La ruleta de La Comu Argentina  · Eliminaciones</title>
+<title>La ruleta de La Comu Argentina · Eliminaciones</title>
 
 <style>
 :root {
@@ -195,6 +195,8 @@ input {
   cursor: pointer;
   transition: 0.18s;
   text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .spin-button {
@@ -360,7 +362,7 @@ input {
   font-size: 12px;
 }
 
-/* MODAL DE VICTORIA */
+/* MODAL DE VICTORIA Y ELIMINACIÓN */
 .overlay {
   display: none;
   position: fixed;
@@ -386,6 +388,10 @@ input {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+.victory.eliminated-modal {
+  border-color: var(--rojo);
+}
+
 .victory-gif-container {
   width: 100%;
   max-width: 280px;
@@ -408,6 +414,10 @@ input {
   font-size: 22px;
 }
 
+.victory.eliminated-modal h2 {
+  color: var(--rojo);
+}
+
 .winner-name {
   font-size: 20px;
   font-weight: 1000;
@@ -419,6 +429,12 @@ input {
   border: 2px dashed #65d9e7;
 }
 
+.winner-name.eliminated-box {
+  background: #fff0f2;
+  border-color: #ffd0d7;
+  color: #bd3047;
+}
+
 /* CREDITOS */
 .credit {
   position: static;
@@ -427,6 +443,16 @@ input {
   font-size: 11px;
   font-weight: 900;
   color: #54798b;
+}
+
+.credit a {
+  color: var(--azul);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.credit a:hover {
+  color: var(--celeste);
 }
 
 @media (min-width: 900px) {
@@ -633,12 +659,12 @@ input {
 </main>
 
 <div id="victoryOverlay" class="overlay">
-    <div class="victory">
+    <div id="modalCard" class="victory">
         <div class="victory-gif-container">
-            <iframe src="https://giphy.com/embed/OdOArbU8HKuWtuoBsf" width="480" height="379" style="" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/OdOArbU8HKuWtuoBsf">via GIPHY</a></p>
+            <iframe id="modalGif" src="" width="480" height="379" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
         </div>
 
-        <h2>¡TENEMOS GANADOR!</h2>
+        <h2 id="modalTitle">¡TENEMOS GANADOR!</h2>
 
         <div id="winnerName" class="winner-name"></div>
 
@@ -650,7 +676,9 @@ input {
 
 <div id="confetti" class="confetti"></div>
 
-<div class="credit">Creado por Enzo Francesco Jimenez</div>
+<div class="credit">
+  Creado por <a href="https://www.instagram.com/enzojimenez_g/" target="_blank" rel="noopener noreferrer">Enzo Francesco Jimenez</a>
+</div>
 
 <script>
 const data = {
@@ -873,7 +901,7 @@ function spinRoulette(mode){
 
     if(mode === "last" && state.active.length === 1){
         const winner = state.participants.find(p => p.id === state.active[0]);
-        showWinner(winner, "Último número en pie");
+        showWinner(winner);
         return;
     }
 
@@ -901,7 +929,7 @@ function spinRoulette(mode){
 
         if(mode === "first"){
             document.getElementById("firstStatus").innerHTML = `Ganador: <strong>Nº ${id}</strong> — ${escapeHTML(participant.text || "Sin texto")}`;
-            showWinner(participant, "Primer número");
+            showWinner(participant);
             return;
         }
 
@@ -915,11 +943,14 @@ function spinRoulette(mode){
         updateRouletteUI(mode);
         renderHistory();
 
+        // Mostrar cartel de eliminado
+        showEliminated(participant);
+
         if(state.active.length === 1){
             setTimeout(() => {
                 const winner = state.participants.find(p => p.id === state.active[0]);
-                showWinner(winner, "Último número en pie");
-            }, 700);
+                showWinner(winner);
+            }, 1200);
         }
     }, 5700);
 }
@@ -977,12 +1008,43 @@ function restoreNumbers(mode){
     drawWheel(mode);
 }
 
-function showWinner(participant, mode){
+function showWinner(participant){
     if(!participant) return;
 
-    document.getElementById("winnerName").innerHTML = `Nº ${participant.id}<br><small style="font-size:18px; font-weight:normal; color:#47788c;">${escapeHTML(participant.text || "Sin texto")}</small>`;
+    const modalCard = document.getElementById("modalCard");
+    const modalTitle = document.getElementById("modalTitle");
+    const winnerName = document.getElementById("winnerName");
+    const modalGif = document.getElementById("modalGif");
+
+    modalGif.src = "https://giphy.com/embed/OdOArbU8HKuWtuoBsf";
+
+    modalCard.classList.remove("eliminated-modal");
+    winnerName.classList.remove("eliminated-box");
+
+    modalTitle.innerHTML = "¡TENEMOS GANADOR!";
+    winnerName.innerHTML = `Nº ${participant.id}<br><small style="font-size:18px; font-weight:normal; color:#47788c;">${escapeHTML(participant.text || "Sin texto")}</small>`;
+    
     document.getElementById("victoryOverlay").classList.add("show");
     createConfetti();
+}
+
+function showEliminated(participant){
+    if(!participant) return;
+
+    const modalCard = document.getElementById("modalCard");
+    const modalTitle = document.getElementById("modalTitle");
+    const winnerName = document.getElementById("winnerName");
+    const modalGif = document.getElementById("modalGif");
+
+    modalGif.src = "https://giphy.com/embed/hMDkLT1MkXJISMGCAO";
+
+    modalCard.classList.add("eliminated-modal");
+    winnerName.classList.add("eliminated-box");
+
+    modalTitle.innerHTML = "❌ ELIMINADO";
+    winnerName.innerHTML = `Nº ${participant.id}<br><small style="font-size:18px; font-weight:normal;">${escapeHTML(participant.text || "Sin texto")}</small>`;
+    
+    document.getElementById("victoryOverlay").classList.add("show");
 }
 
 function closeVictory(){
